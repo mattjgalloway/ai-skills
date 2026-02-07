@@ -1,4 +1,3 @@
----
 name: FPL Data Access
 description: Accesses comprehensive data from the Fantasy Premier League API, covering general game statistics (teams, players, gameweeks) and specific FPL manager entry details (history, transfers, picks).
 tags:
@@ -21,7 +20,7 @@ examples:
 
 # FPL Data Access Skill
 
-This skill allows an AI agent to fetch comprehensive data from the Fantasy Premier League (FPL) API. It includes scripts for general game-wide data, manager-specific entry data, fixtures, and live gameweek data. Outputs are JSON-formatted for programmatic consumption.
+This skill allows an AI agent to fetch comprehensive data from the Fantasy Premier League (FPL) API. It includes scripts for general game-wide data, manager-specific entry data, fixtures, live gameweek data, and league standings. Outputs are JSON-formatted for programmatic consumption.
 
 ## Common Functionality
 
@@ -44,6 +43,7 @@ Retrieve broad FPL data such as lists of all teams, players, or gameweeks, with 
 * `--teams`: Retrieves a list of all Premier League teams with their ID, name, short name, and strength rating. Example: `python fpl_data.py --teams`
 
 * Player filtering: Use the following flags to query players and return matching results: `--player`, `--player-id`, `--player-ids`, `--team`, `--team-id`, `--position`, `--min-price`, `--max-price`. Example: `python fpl_data.py --position MID --min-price 6.0`
+
 * `--player <PLAYER_NAME_PARTIAL>`: Filter players by partial/full name (case-insensitive). Example: `python fpl_data.py --player "Salah"`
 
 * `--player-id <PLAYER_ID>`: Filter by player ID. Example: `python fpl_data.py --player-id 123`
@@ -127,3 +127,29 @@ The script returns a `live` object containing:
 - `gameweek`: Provided gameweek number
 - `elements`: Array of player live objects (`id`, `stats`, `explain`)
 - `events`: Array of event-level summaries (`id`, `stats`)
+
+---
+
+## 5. League Standings (`fpl_league_standings.py`)
+
+Fetch classic league details and standings for a given league.
+
+API endpoint:
+
+- League standings: `https://fantasy.premierleague.com/api/leagues-classic/LID/standings/?page_standings=P` (replace `LID` with league id and `P` with page number)
+
+### Arguments for `fpl_league_standings.py`
+
+* `league_id` (required positional): The classic league ID to query. Example: `python fpl_league_standings.py 131049`
+
+* `--page <N>`: The page of standings to fetch (default `1`). Example: `python fpl_league_standings.py 131049 --page 1`
+
+* `--force-refresh`: See Common Functionality for caching and refresh behavior.
+
+### Output fields
+
+The script returns a JSON object containing:
+
+- `league`: The league metadata returned by the API (name, id, etc.)
+- `standings`: Array of simplified standing entries (rank, entry id, player_name, entry_name, total, event_total, last_rank, movement)
+- `page`: Pagination information (`page`, `results`, `has_next`, `has_previous`)
