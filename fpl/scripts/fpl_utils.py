@@ -4,6 +4,41 @@ from datetime import datetime, date
 from urllib import request, error
 from typing import Any, Dict, Optional
 
+class StatsTracker:
+    """Simple JSON-backed tracker for per-URL stats (requests, api_fetches)."""
+    def __init__(self, cache_dir: str, filename: str = "fpl_cache_stats.json") -> None:
+        self.filepath = os.path.join(cache_dir, filename)
+        self._data: Dict[str, Dict[str, int]] = {}
+        self._load()
+
+    def _load(self) -> None:
+        if os.path.exists(self.filepath):
+            try:
+                with open(self.filepath, 'r') as f:
+                    self._data = json.load(f)
+            except Exception:
+                self._data = {}
+
+    def _save(self) -> None:
+        try:
+            with open(self.filepath, 'w') as f:
+                json.dump(self._data, f, indent=2)
+        except Exception:
+            pass
+
+    def increment_request(self, url: str) -> None:
+        entry = self._data.get(url, {"requests": 0, "api_fetches": 0})
+        entry["requests"] = entry.get("requests", 0) + 1
+        self._data[url] = entry
+        self._save()
+
+    def increment_api_fetch(self, url: str) -> None:
+        entry = self._data.get(url, {"requests": 0, "api_fetches": 0})
+        entry["api_fetches"] = entry.get("api_fetches", 0) + 1
+        self._data[url] = entry
+        self._save()
+
+
 class FPLUtils:
     cache_dir: str
     cache_expiry_days: int
@@ -17,6 +52,8 @@ class FPLUtils:
         self.cache_expiry_days = cache_expiry_days
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir, exist_ok=True)
+        # Stats tracker for URL request counting
+        self.stats = StatsTracker(self.cache_dir)
 
     def fetch_url_cached(self, url: str, cache_key: str, force_refresh: bool) -> Dict[str, Any]:
         """
@@ -35,6 +72,12 @@ class FPLUtils:
         """
         cache_file_path = os.path.join(self.cache_dir, f"fpl_cache_{cache_key}.json")
         
+        # Update simple stats: count this request invocation (non-fatal)
+        try:
+            self.stats.increment_request(url)
+        except Exception:
+            pass
+
         # Try to load from cache
         if not force_refresh and os.path.exists(cache_file_path):
             file_mod_timestamp = os.path.getmtime(cache_file_path)
@@ -59,6 +102,11 @@ class FPLUtils:
             # Save to cache
             with open(cache_file_path, 'w') as f:
                 json.dump(data, f, indent=4)
+            # Record that we actually fetched from the API (non-fatal)
+            try:
+                self.stats.increment_api_fetch(url)
+            except Exception:
+                pass
             return data
         except error.URLError as e:
             raise Exception(f"Network Error fetching {cache_key} from {url}: {e.reason}")
