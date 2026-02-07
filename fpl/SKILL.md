@@ -118,6 +118,8 @@ Fetch live per-player and event statistics for a specific gameweek. The `--gamew
 
 * `--gameweek <N>` (required): Fetch live data for the specified gameweek number `N`. Example: `python fpl_live_gameweek.py --gameweek 24`
 
+* `--player-ids <PLAYER_IDS...>` (required): Filter by multiple player IDs (space-separated). Example: `python fpl_live_gameweek.py --player-ids 123 456 789`
+
 * `--force-refresh`: See Common Functionality for caching and refresh behavior.
 
 ### Live output fields
