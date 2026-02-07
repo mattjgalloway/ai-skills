@@ -12,7 +12,7 @@ class FPLUtils:
         self.cache_dir = cache_dir
         self.cache_expiry_days = cache_expiry_days
         if not os.path.exists(self.cache_dir):
-            os.makedirs(self.cache_dir)
+            os.makedirs(self.cache_dir, exist_ok=True)
 
     def fetch_url_cached(self, url: str, cache_key: str, force_refresh: bool):
         """
@@ -80,6 +80,7 @@ def format_json_output(status: str, data: dict = None, message: str = None):
     output = {"status": status}
     if message:
         output["message"] = message
-    if data:
+    # Include `data` even when it's an empty dict/list; only omit when None
+    if data is not None:
         output["data"] = data
     return json.dumps(output, indent=2)

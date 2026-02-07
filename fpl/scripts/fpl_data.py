@@ -182,18 +182,21 @@ def main():
 
     if args.players or specific_player_filters_active:
         filtered_players = fpl.get_players(
-            name=args.player, 
-            player_id=args.player_id, 
-            team_id=filter_team_id, 
+            name=args.player,
+            player_id=args.player_id,
+            team_id=filter_team_id,
             position=args.position,
             min_price=args.min_price,
             max_price=args.max_price
         )
-        output_data["players"] = filtered_players
         output_data["player_count"] = len(filtered_players)
-        
+
+        # When requesting all players without filters, show only first 10 for brevity
         if args.players and not specific_player_filters_active and len(filtered_players) > 10:
+            output_data["players"] = filtered_players[:10]
             output_data["player_display_note"] = "Only first 10 players are shown for brevity when no specific filters are applied. Use specific filters for a full list."
+        else:
+            output_data["players"] = filtered_players
 
     if not (args.gameweeks or args.teams or args.players or specific_player_filters_active):
         output_status = "info"
