@@ -113,7 +113,6 @@ def main():
     parser = argparse.ArgumentParser(description="Fetch and display Fantasy Premier League data.")
     parser.add_argument('--gameweeks', action='store_true', help='Show details for all gameweeks.')
     parser.add_argument('--teams', action='store_true', help='Show details for all teams.')
-    parser.add_argument('--players', action='store_true', help='Show details for all players (limited to 10 by default unless filtered).')
     parser.add_argument('--team', type=str, help='Filter players by team name (case-insensitive, partial match).')
     parser.add_argument('--team-id', type=int, help='Filter players by team ID.')
     parser.add_argument('--player', type=str, help='Filter players by player name (case-insensitive, partial match).')
@@ -182,7 +181,7 @@ def main():
                                       args.player_ids is not None or args.position is not None or args.min_price is not None or 
                                       args.max_price is not None or args.team is not None or args.team_id is not None)
 
-    if args.players or specific_player_filters_active:
+    if specific_player_filters_active:
         filtered_players = fpl.get_players(
             name=args.player,
             player_id=args.player_id,
@@ -193,13 +192,7 @@ def main():
             max_price=args.max_price
         )
         output_data["player_count"] = len(filtered_players)
-
-        # When requesting all players without filters, show only first 10 for brevity
-        if args.players and not specific_player_filters_active and len(filtered_players) > 10:
-            output_data["players"] = filtered_players[:10]
-            output_data["player_display_note"] = "Only first 10 players are shown for brevity when no specific filters are applied. Use specific filters for a full list."
-        else:
-            output_data["players"] = filtered_players
+        output_data["players"] = filtered_players
 
     if not (args.gameweeks or args.teams or args.players or specific_player_filters_active):
         output_status = "info"

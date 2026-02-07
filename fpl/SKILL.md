@@ -43,8 +43,7 @@ Retrieve broad FPL data such as lists of all teams, players, or gameweeks, with 
 
 * `--teams`: Retrieves a list of all Premier League teams with their ID, name, short name, and strength rating. Example: `python fpl_data.py --teams`
 
-* `--players`: Retrieves a list of players. When used without further filters the script shows the first 10 players for brevity; when combined with filters it returns the full matching list. Example: `python fpl_data.py --players`
-
+* Player filtering: Use the following flags to query players and return matching results: `--player`, `--player-id`, `--player-ids`, `--team`, `--team-id`, `--position`, `--min-price`, `--max-price`. Example: `python fpl_data.py --position MID --min-price 6.0`
 * `--player <PLAYER_NAME_PARTIAL>`: Filter players by partial/full name (case-insensitive). Example: `python fpl_data.py --player "Salah"`
 
 * `--player-id <PLAYER_ID>`: Filter by player ID. Example: `python fpl_data.py --player-id 123`
