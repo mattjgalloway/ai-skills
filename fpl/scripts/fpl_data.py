@@ -1,7 +1,17 @@
 import argparse
 import json
 import os
+import unicodedata
 from fpl_utils import FPLUtils, format_json_output # Import the utility and formatter
+
+
+def normalize_str(s):
+    """Return a lower-cased, accent-stripped ascii representation of s for comparison."""
+    if s is None:
+        return ''
+    # Decompose unicode characters and remove combining diacritics
+    normalized = unicodedata.normalize('NFKD', str(s))
+    return ''.join(c for c in normalized if not unicodedata.combining(c)).lower()
 
 class FPLData:
     BASE_URL = "https://fantasy.premierleague.com/api/bootstrap-static/"
@@ -80,7 +90,7 @@ class FPLData:
                 'selected_by_percent': player.get('selected_by_percent')
             }
 
-            if name and name.lower() not in full_name.lower(): continue
+            if name and normalize_str(name) not in normalize_str(full_name): continue
             if player_id is not None and player_id != player_info['id']: continue
             if player_ids is not None and player_info['id'] not in player_ids: continue
             if team_id is not None and team_id!= player_team_id: continue
@@ -148,8 +158,9 @@ def main():
     filter_team_id = args.team_id
     team_filter_message = None
     if args.team:
-        all_teams = fpl.get_teams() 
-        found_teams = [team['id'] for team in all_teams if args.team.lower() in team['name'].lower() or args.team.lower() in team['short_name'].lower()]
+        all_teams = fpl.get_teams()
+        search_team = normalize_str(args.team)
+        found_teams = [team['id'] for team in all_teams if search_team in normalize_str(team.get('name')) or search_team in normalize_str(team.get('short_name'))]
         if len(found_teams) == 1:
             if filter_team_id is not None and filter_team_id!= found_teams[0]:
                 team_filter_message = f"Warning: Both --team '{args.team}' (ID {found_teams[0]}) and --team-id '{args.team_id}' were provided and conflict. Using --team-id: {args.team_id}."
