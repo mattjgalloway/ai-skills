@@ -2,10 +2,11 @@ import argparse
 import json
 import os
 import unicodedata
+from typing import Any, Dict, List, Optional
 from fpl_utils import FPLUtils, format_json_output # Import the utility and formatter
 
 
-def normalize_str(s):
+def normalize_str(s: Optional[str]) -> str:
     """Return a lower-cased, accent-stripped ascii representation of s for comparison."""
     if s is None:
         return ''
@@ -14,15 +15,15 @@ def normalize_str(s):
     return ''.join(c for c in normalized if not unicodedata.combining(c)).lower()
 
 class FPLData:
-    BASE_URL = "https://fantasy.premierleague.com/api/bootstrap-static/"
+    BASE_URL: str = "https://fantasy.premierleague.com/api/bootstrap-static/"
 
-    def __init__(self, fpl_utils: FPLUtils):
-        self.fpl_utils = fpl_utils
-        self._data = None
-        self.team_name_map = {}
-        self.position_map = {}
+    def __init__(self, fpl_utils: FPLUtils) -> None:
+        self.fpl_utils: FPLUtils = fpl_utils
+        self._data: Optional[Dict[str, Any]] = None
+        self.team_name_map: Dict[int, str] = {}
+        self.position_map: Dict[Any, Any] = {}
 
-    def _load_data(self, force_refresh=False):
+    def _load_data(self, force_refresh: bool = False) -> Dict[str, Any]:
         """Loads data from API or cache using FPLUtils."""
         if self._data is None or force_refresh:
             try:
@@ -35,11 +36,11 @@ class FPLData:
                 raise # Re-raise to be caught by main() for JSON error output
         return self._data
 
-    def _build_team_map(self):
+    def _build_team_map(self) -> None:
         if self._data and 'teams' in self._data:
             self.team_name_map = {team.get('id'): team.get('name') for team in self._data.get('teams', [])}
 
-    def _build_position_map(self):
+    def _build_position_map(self) -> None:
         if self._data and 'element_types' in self._data:
             self.position_map = {et.get('id'): et.get('singular_name_short') for et in self._data.get('element_types', [])}
             for et in self._data.get('element_types', []):
@@ -48,7 +49,7 @@ class FPLData:
                 if et.get('plural_name_short'):
                     self.position_map[et['plural_name_short'].lower()] = et['id']
 
-    def get_teams(self):
+    def get_teams(self) -> List[Dict[str, Any]]:
         data = self._data 
         teams = data.get('teams', [])
         return [{
@@ -57,8 +58,7 @@ class FPLData:
             'short_name': team.get('short_name'),
             'strength': team.get('strength')
         } for team in teams]
-
-    def get_players(self, name=None, player_ids=None, team_id=None, position=None, min_price=None, max_price=None):
+    def get_players(self, name: Optional[str] = None, player_ids: Optional[List[int]] = None, team_id: Optional[int] = None, position: Optional[str] = None, min_price: Optional[float] = None, max_price: Optional[float] = None) -> List[Dict[str, Any]]:
         data = self._data 
         elements = data.get('elements', [])
 
@@ -102,7 +102,7 @@ class FPLData:
             player_details.append(player_info)
         return player_details
 
-    def get_gameweeks(self):
+    def get_gameweeks(self) -> List[Dict[str, Any]]:
         data = self._data 
         events = data.get('events', [])
         return [{

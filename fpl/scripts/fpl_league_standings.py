@@ -1,19 +1,20 @@
 import argparse
+from typing import Any, Dict, List
 from fpl_utils import FPLUtils, format_json_output
 
 
 class FPLLeagueStandings:
-    BASE_URL_TEMPLATE = "https://fantasy.premierleague.com/api/leagues-classic/{lid}/standings/?page_standings={page}"
+    BASE_URL_TEMPLATE: str = "https://fantasy.premierleague.com/api/leagues-classic/{lid}/standings/?page_standings={page}"
 
-    def __init__(self, fpl_utils: FPLUtils):
-        self.fpl_utils = fpl_utils
+    def __init__(self, fpl_utils: FPLUtils) -> None:
+        self.fpl_utils: FPLUtils = fpl_utils
 
-    def _load_data(self, league_id: int, page: int = 1, force_refresh: bool = False):
+    def _load_data(self, league_id: int, page: int = 1, force_refresh: bool = False) -> Any:
         url = self.BASE_URL_TEMPLATE.format(lid=league_id, page=page)
         cache_key = f"league_{league_id}_standings_p{page}"
         return self.fpl_utils.fetch_url_cached(url, cache_key, force_refresh)
 
-    def get_standings(self, league_id: int, page: int = 1, force_refresh: bool = False):
+    def get_standings(self, league_id: int, page: int = 1, force_refresh: bool = False) -> Dict[str, Any]:
         """Return a dict with `league` details and `standings` list for the requested page.
 
         The returned structure is:

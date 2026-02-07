@@ -1,20 +1,21 @@
 import argparse
+from typing import Any, Dict, List, Optional
 from fpl_utils import FPLUtils, format_json_output
 
 class FPLFixtureData:
-    BASE_URL = "https://fantasy.premierleague.com/api/fixtures/"
+    BASE_URL: str = "https://fantasy.premierleague.com/api/fixtures/"
 
-    def __init__(self, fpl_utils: FPLUtils):
-        self.fpl_utils = fpl_utils
+    def __init__(self, fpl_utils: FPLUtils) -> None:
+        self.fpl_utils: FPLUtils = fpl_utils
 
-    def _load_data(self, force_refresh=False, gameweek=None):
+    def _load_data(self, force_refresh: bool = False, gameweek: Optional[int] = None) -> Any:
         cache_key = f"fixtures_event_{gameweek}" if gameweek is not None else "fixtures"
         url = self.BASE_URL
         if gameweek is not None:
             url = f"{self.BASE_URL}?event={gameweek}"
         return self.fpl_utils.fetch_url_cached(url, cache_key, force_refresh)
 
-    def get_fixtures(self, gameweek=None, force_refresh=False):
+    def get_fixtures(self, gameweek: Optional[int] = None, force_refresh: bool = False) -> List[Dict[str, Any]]:
         data = self._load_data(force_refresh=force_refresh, gameweek=gameweek)
         # API returns a list of fixture objects for this endpoint
         fixtures = data if isinstance(data, list) else []

@@ -1,21 +1,23 @@
 import argparse
 import json
 import os
+from typing import Any, Dict, List, Optional
 from fpl_utils import FPLUtils, format_json_output # Import the utility and formatter
 
+
 class FPLEntryData:
-    BASE_URL = "https://fantasy.premierleague.com/api/entry/"
+    BASE_URL: str = "https://fantasy.premierleague.com/api/entry/"
 
-    def __init__(self, entry_id: int, fpl_utils: FPLUtils):
-        self.entry_id = entry_id
-        self.fpl_utils = fpl_utils # Use the shared utility
+    def __init__(self, entry_id: int, fpl_utils: FPLUtils) -> None:
+        self.entry_id: int = entry_id
+        self.fpl_utils: FPLUtils = fpl_utils # Use the shared utility
         # These will store raw fetched data for processing
-        self._raw_details_data = None
-        self._raw_history_data = None
-        self._raw_transfers_data = None
-        self._raw_picks_data = {} # Store picks data per gameweek
+        self._raw_details_data: Optional[Dict[str, Any]] = None
+        self._raw_history_data: Optional[Dict[str, Any]] = None
+        self._raw_transfers_data: Optional[List[Dict[str, Any]]] = None
+        self._raw_picks_data: Dict[int, Dict[str, Any]] = {} # Store picks data per gameweek
 
-    def get_entry_details(self, force_refresh: bool = False):
+    def get_entry_details(self, force_refresh: bool = False) -> Dict[str, Any]:
         url = f"{self.BASE_URL}{self.entry_id}/"
         try:
             self._raw_details_data = self.fpl_utils.fetch_url_cached(url, f"entry_{self.entry_id}_details", force_refresh)
@@ -42,7 +44,7 @@ class FPLEntryData:
         except Exception as e:
             raise Exception(f"Failed to get entry details for ID {self.entry_id}: {e}")
 
-    def get_history(self, force_refresh: bool = False):
+    def get_history(self, force_refresh: bool = False) -> Dict[str, Any]:
         url = f"{self.BASE_URL}{self.entry_id}/history/"
         try:
             self._raw_history_data = self.fpl_utils.fetch_url_cached(url, f"entry_{self.entry_id}_history", force_refresh)
@@ -87,7 +89,7 @@ class FPLEntryData:
         except Exception as e:
             raise Exception(f"Failed to get history for entry ID {self.entry_id}: {e}")
 
-    def get_transfers(self, force_refresh: bool = False):
+    def get_transfers(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
         url = f"{self.BASE_URL}{self.entry_id}/transfers/"
         try:
             self._raw_transfers_data = self.fpl_utils.fetch_url_cached(url, f"entry_{self.entry_id}_transfers", force_refresh)
@@ -107,7 +109,7 @@ class FPLEntryData:
         except Exception as e:
             raise Exception(f"Failed to get transfers for entry ID {self.entry_id}: {e}")
 
-    def get_picks(self, gameweek: int, force_refresh: bool = False):
+    def get_picks(self, gameweek: int, force_refresh: bool = False) -> Dict[str, Any]:
         url = f"{self.BASE_URL}{self.entry_id}/event/{gameweek}/picks/"
         try:
             self._raw_picks_data[gameweek] = self.fpl_utils.fetch_url_cached(url, f"entry_{self.entry_id}_picks_gw{gameweek}", force_refresh)

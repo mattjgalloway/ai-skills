@@ -1,13 +1,14 @@
 import argparse
+from typing import Any, Dict, List, Optional, Tuple
 from fpl_utils import FPLUtils, format_json_output
 
 class FPLLiveGameweek:
-    BASE_URL_TEMPLATE = "https://fantasy.premierleague.com/api/event/{gw}/live/"
+    BASE_URL_TEMPLATE: str = "https://fantasy.premierleague.com/api/event/{gw}/live/"
 
-    def __init__(self, fpl_utils: FPLUtils):
-        self.fpl_utils = fpl_utils
+    def __init__(self, fpl_utils: FPLUtils) -> None:
+        self.fpl_utils: FPLUtils = fpl_utils
 
-    def _load_data(self, gameweek: int, force_refresh=False):
+    def _load_data(self, gameweek: int, force_refresh: bool = False) -> Tuple[Dict[str, Any], int]:
         """Load live data for the given gameweek (required).
 
         Args:
@@ -21,7 +22,7 @@ class FPLLiveGameweek:
         cache_key = f"live_event_{gameweek}"
         return self.fpl_utils.fetch_url_cached(url, cache_key, force_refresh), gameweek
 
-    def get_live_gameweek(self, gameweek: int, player_ids=None, force_refresh=False):
+    def get_live_gameweek(self, gameweek: int, player_ids: Optional[List[int]] = None, force_refresh: bool = False) -> Dict[str, Any]:
         data, resolved_gw = self._load_data(gameweek, force_refresh=force_refresh)
         # The live endpoint typically returns a dict with 'elements' and 'events'
         if not isinstance(data, dict):

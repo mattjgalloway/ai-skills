@@ -2,9 +2,13 @@ import json
 import os
 from datetime import datetime, date
 from urllib import request, error
+from typing import Any, Dict, Optional
 
 class FPLUtils:
-    def __init__(self, cache_dir="cache", cache_expiry_days=1):
+    cache_dir: str
+    cache_expiry_days: int
+
+    def __init__(self, cache_dir: str = "cache", cache_expiry_days: int = 1) -> None:
         # If a relative path is provided, interpret it relative to this script's directory
         if not os.path.isabs(cache_dir):
             base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +18,7 @@ class FPLUtils:
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir, exist_ok=True)
 
-    def fetch_url_cached(self, url: str, cache_key: str, force_refresh: bool):
+    def fetch_url_cached(self, url: str, cache_key: str, force_refresh: bool) -> Dict[str, Any]:
         """
         Fetches data from a given URL, using a cache file if available and valid.
         
@@ -65,7 +69,7 @@ class FPLUtils:
         except Exception as e:
             raise Exception(f"An unexpected error occurred during {cache_key} fetch from {url}: {e}")
 
-def format_json_output(status: str, data: dict = None, message: str = None):
+def format_json_output(status: str, data: Optional[Dict[str, Any]] = None, message: Optional[str] = None) -> str:
     """
     Standardizes the JSON output format for both FPL scripts.
 
