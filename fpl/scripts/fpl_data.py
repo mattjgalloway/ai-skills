@@ -194,9 +194,9 @@ def main():
         output_data["player_count"] = len(filtered_players)
         output_data["players"] = filtered_players
 
-    if not (args.gameweeks or args.teams or args.players or specific_player_filters_active):
+    if not (args.gameweeks or args.teams or specific_player_filters_active):
         output_status = "info"
-        output_message = "No specific data requested. Use --gameweeks, --teams, --players, or filters like --player, --team, etc."
+        output_message = "No specific data requested. Use --gameweeks, --teams, or filters like --player, --team, etc."
     
     print(format_json_output(status=output_status, data=output_data, message=output_message))
 
