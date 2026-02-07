@@ -1,3 +1,4 @@
+---
 name: FPL Data Access
 description: Accesses comprehensive data from the Fantasy Premier League API, covering general game statistics (teams, players, gameweeks) and specific FPL manager entry details (history, transfers, picks).
 tags:
