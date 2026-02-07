@@ -28,7 +28,7 @@ This skill allows an AI agent to fetch comprehensive data from the Fantasy Premi
 Shared behavior across scripts:
 
 - Caching: API responses are cached under a `cache` directory located relative to the `fpl/scripts` directory by default. Cache files are named using a `fpl_cache_<key>.json` pattern.
-- Force refresh: All scripts accept a `--force-refresh` flag which, when provided, forces a fresh fetch from the API and bypasses cache.
+- Force refresh: All scripts accept a `--force-refresh` flag which, when provided, forces a fresh fetch from the API and bypasses cache. ONLY USE FORCE REFRESH IF YOU REALLY NEED FRESH DATA LIKE YOU'RE GETTING LIVE GAMEWEEK DATA AND ONLY ON API CALLS THAT MIGHT HAVE SOME CHANGED DATA.
 - Output format: All scripts produce JSON with the structure `{ "status": "success|info|error", "data": <payload>, "message": <optional> }`.
 
 When reading per-script documentation below, assume `--force-refresh` and the JSON output format behave as described here.
@@ -48,6 +48,8 @@ Retrieve broad FPL data such as lists of all teams, players, or gameweeks, with 
 * `--player <PLAYER_NAME_PARTIAL>`: Filter players by partial/full name (case-insensitive). Example: `python fpl_data.py --player "Salah"`
 
 * `--player-id <PLAYER_ID>`: Filter by player ID. Example: `python fpl_data.py --player-id 123`
+
+* `--player-ids <PLAYER_IDS...>`: Filter by multiple player IDs (space-separated). Example: `python fpl_data.py --player-ids 123 456 789`
 
 * `--team <TEAM_NAME_PARTIAL>`: Filter players by team name (resolves to team ID). Example: `python fpl_data.py --team "Arsenal"`
 

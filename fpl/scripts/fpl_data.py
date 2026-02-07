@@ -48,7 +48,7 @@ class FPLData:
             'strength': team.get('strength')
         } for team in teams]
 
-    def get_players(self, name=None, player_id=None, team_id=None, position=None, min_price=None, max_price=None):
+    def get_players(self, name=None, player_id=None, player_ids=None, team_id=None, position=None, min_price=None, max_price=None):
         data = self._data 
         elements = data.get('elements', [])
 
@@ -81,7 +81,8 @@ class FPLData:
             }
 
             if name and name.lower() not in full_name.lower(): continue
-            if player_id is not None and player_id!= player_info['id']: continue
+            if player_id is not None and player_id != player_info['id']: continue
+            if player_ids is not None and player_info['id'] not in player_ids: continue
             if team_id is not None and team_id!= player_team_id: continue
             if position:
                 target_position_id = self.position_map.get(position.lower())
@@ -116,7 +117,8 @@ def main():
     parser.add_argument('--team', type=str, help='Filter players by team name (case-insensitive, partial match).')
     parser.add_argument('--team-id', type=int, help='Filter players by team ID.')
     parser.add_argument('--player', type=str, help='Filter players by player name (case-insensitive, partial match).')
-    parser.add_argument('--player-id', type=int, help='Filter players by player ID.')
+    parser.add_argument('--player-id', type=int, help='Filter players by a single player ID.')
+    parser.add_argument('--player-ids', type=int, nargs='+', help='Filter players by multiple player IDs (space-separated).')
     parser.add_argument('--position', type=str, help='Filter players by position (GKP, DEF, MID, FWD).')
     parser.add_argument('--min-price', type=float, help='Minimum player cost (e.g., 4.5).')
     parser.add_argument('--max-price', type=float, help='Maximum player cost (e.g., 10.0).')
@@ -177,13 +179,14 @@ def main():
         output_data["teams"] = fpl.get_teams()
 
     specific_player_filters_active = (args.player is not None or args.player_id is not None or 
-                                      args.position is not None or args.min_price is not None or 
+                                      args.player_ids is not None or args.position is not None or args.min_price is not None or 
                                       args.max_price is not None or args.team is not None or args.team_id is not None)
 
     if args.players or specific_player_filters_active:
         filtered_players = fpl.get_players(
             name=args.player,
             player_id=args.player_id,
+            player_ids=args.player_ids,
             team_id=filter_team_id,
             position=args.position,
             min_price=args.min_price,
