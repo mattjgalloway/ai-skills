@@ -1,6 +1,6 @@
 import argparse
 from typing import Any, Dict, List, Optional, Tuple
-from fpl_utils import FPLUtils, format_json_output
+from fpl_utils import FPLUtils, format_json_output, MAX_PLAYERS
 
 
 class FPLLiveGameweek:
@@ -51,10 +51,26 @@ class FPLLiveGameweek:
                 'stats': ev.get('stats', {})
             })
 
+        # Enforce maximum elements returned to avoid huge outputs
+        element_count = len(formatted_elements)
+        result_elements = formatted_elements
+        limit_hit = False
+        limit_message = None
+        if element_count > MAX_PLAYERS:
+            result_elements = formatted_elements[:MAX_PLAYERS]
+            limit_hit = True
+            limit_message = (
+                f"Returned {element_count} players which exceeds the limit of {MAX_PLAYERS}. "
+                "Please narrow the results by providing fewer --player-ids or filtering on the caller side."
+            )
+
         return {
             'gameweek': resolved_gw,
-            'elements': formatted_elements,
-            'events': formatted_events
+            'elements': result_elements,
+            'element_count': element_count,
+            'events': formatted_events,
+            'limit_hit': limit_hit,
+            'limit_message': limit_message
         }
 
 

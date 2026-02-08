@@ -5,6 +5,9 @@ from datetime import datetime
 from urllib import request, error
 from typing import Any, Dict, Optional
 
+# Maximum number of players/elements to return in scripts
+MAX_PLAYERS = 50
+
 
 class StatsTracker:
     """Simple JSON-backed tracker for per-URL stats (requests, api_fetches)."""

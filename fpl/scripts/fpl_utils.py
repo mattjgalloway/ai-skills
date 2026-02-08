@@ -4,6 +4,9 @@ from datetime import datetime, date
 from urllib import request, error
 from typing import Any, Dict, Optional
 
+# Maximum number of players/elements to return in scripts
+MAX_PLAYERS = 50
+
 
 class StatsTracker:
     """Simple JSON-backed tracker for per-URL stats (requests, api_fetches)."""
@@ -95,7 +98,7 @@ class FPLUtils:
         # Fetch from API if cache failed or not used
         try:
             with request.urlopen(url) as response:
-                if response.getcode()!= 200:
+                if response.getcode() != 200:
                     raise error.HTTPError(url, response.getcode(), f"HTTP Error {response.getcode()}: {response.reason}", response.info(), None)
                 data_bytes = response.read()
                 data = json.loads(data_bytes.decode('utf-8'))

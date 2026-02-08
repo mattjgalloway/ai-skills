@@ -1,5 +1,5 @@
 import argparse
-from livefpl_utils import LiveFPLUtils, format_json_output
+from livefpl_utils import LiveFPLUtils, format_json_output, MAX_PLAYERS
 
 URL = "https://www.livefpl.net/prices"
 
@@ -70,8 +70,19 @@ def main():
                     out.append(p)
             players = out
 
-        data['players'] = players
-        data['player_count'] = len(players)
+        original_count = len(players)
+
+        if original_count > MAX_PLAYERS:
+            data['players'] = players[:MAX_PLAYERS]
+            data['limit_hit'] = True
+            data['limit_message'] = (
+                f"Returned {original_count} players which exceeds the limit of {MAX_PLAYERS}. "
+                "Please narrow the results using --player-ids or the --filter-* options to reduce the number of players returned."
+            )
+        else:
+            data['players'] = players
+
+        data['player_count'] = original_count
         print(format_json_output(status='success', data=data))
     except Exception as e:
         print(format_json_output(status='error', message=str(e)))

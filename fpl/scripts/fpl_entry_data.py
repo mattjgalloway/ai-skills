@@ -13,7 +13,7 @@ class FPLEntryData:
         self._raw_details_data: Optional[Dict[str, Any]] = None
         self._raw_history_data: Optional[Dict[str, Any]] = None
         self._raw_transfers_data: Optional[List[Dict[str, Any]]] = None
-        self._raw_picks_data: Dict[int, Dict[str, Any]] = {} # Store picks data per gameweek
+        self._raw_picks_data: Dict[int, Dict[str, Any]] = {}  # Store picks data per gameweek
 
     def get_entry_details(self, force_refresh: bool = False) -> Dict[str, Any]:
         url = f"{self.BASE_URL}{self.entry_id}/"

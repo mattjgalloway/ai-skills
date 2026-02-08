@@ -59,6 +59,12 @@ Retrieve broad FPL data such as lists of all teams, players, or gameweeks, with 
 
 * `--force-refresh`: See Common Functionality for caching and refresh behavior.
 
+### Results limit
+
+- **Limit:** Scripts that return player lists cap the number of players returned to 50 by default.
+- **Behavior when hit:** When a query would return more than 50 players, the output is truncated to the first 50 results. The JSON output will include the original `player_count` (the full count before truncation), a boolean `limit_hit` set to `true`, and a human-readable `limit_message` advising how to narrow results.
+- **How to avoid truncation:** Narrow results using filters such as `--player`, `--player-ids`, `--team`, `--team-id`, `--position`, `--min-price`, or `--max-price` so the total matches are at or below the 50-player cap.
+
 ---
 
 ## 2. FPL Manager Entry Data (`fpl_entry_data.py`)

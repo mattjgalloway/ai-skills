@@ -55,6 +55,12 @@ Interpretation:
 - `--filter-now` : Apply the `--filter-gt/--filter-lt` to `pct_now`.
 - `--filter-tonight` : Apply the `--filter-gt/--filter-lt` to `pct_tonight`.
 
+### Results limit
+
+- **Limit:** The script caps the number of returned players to 50 by default.
+- **Behavior when hit:** If more than 50 players match the query, the output `players` array is truncated to the first 50 entries. The JSON output includes `player_count` (the original total count), a boolean `limit_hit` set to `true`, and a `limit_message` describing how to narrow results.
+- **How to avoid truncation:** Use `--player-ids` and/or the `--filter-*` options to narrow the set of matching players.
+
 Notes:
 - If neither `--filter-now` nor `--filter-tonight` is provided, `--filter-gt`/`--filter-lt` are applied to both metrics (OR).
 - Combine `--player-ids` with filters to narrow results to a specific set of players.

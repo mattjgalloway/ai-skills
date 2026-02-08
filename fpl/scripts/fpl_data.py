@@ -1,7 +1,7 @@
 import argparse
 import unicodedata
 from typing import Any, Dict, List, Optional
-from fpl_utils import FPLUtils, format_json_output  # Import the utility and formatter
+from fpl_utils import FPLUtils, format_json_output, MAX_PLAYERS  # Import the utility and formatter
 
 
 def normalize_str(s: Optional[str]) -> str:
@@ -31,8 +31,8 @@ class FPLData:
                 self._build_position_map()
             except Exception as e:
                 # Store the error message in _data for main to retrieve and format
-                self._data = {"error": str(e)} 
-                raise # Re-raise to be caught by main() for JSON error output
+                self._data = {"error": str(e)}
+                raise  # Re-raise to be caught by main() for JSON error output
         return self._data
 
     def _build_team_map(self) -> None:
@@ -49,7 +49,7 @@ class FPLData:
                     self.position_map[et['plural_name_short'].lower()] = et['id']
 
     def get_teams(self) -> List[Dict[str, Any]]:
-        data = self._data 
+        data = self._data
         teams = data.get('teams', [])
         return [{
             'id': team.get('id'),
@@ -59,7 +59,7 @@ class FPLData:
         } for team in teams]
 
     def get_players(self, name: Optional[str] = None, player_ids: Optional[List[int]] = None, team_id: Optional[int] = None, position: Optional[str] = None, min_price: Optional[float] = None, max_price: Optional[float] = None) -> List[Dict[str, Any]]:
-        data = self._data 
+        data = self._data
         elements = data.get('elements', [])
 
         player_details = []
@@ -154,7 +154,7 @@ def main():
         print(format_json_output(status=output_status, message=output_message))
         return
 
-    if not fpl._data or "error" in fpl._data: # Check if _data contains an error from _load_data
+    if not fpl._data or "error" in fpl._data:  # Check if _data contains an error from _load_data
         output_status = "error"
         output_message = fpl._data.get("error", "Could not load FPL general data from API or cache.")
         print(format_json_output(status=output_status, message=output_message))
@@ -208,8 +208,20 @@ def main():
             min_price=args.min_price,
             max_price=args.max_price
         )
-        output_data["player_count"] = len(filtered_players)
-        output_data["players"] = filtered_players
+        original_count = len(filtered_players)
+        output_data["player_count"] = original_count
+
+        # Enforce maximum returned players to avoid huge outputs
+        if original_count > MAX_PLAYERS:
+            output_data["players"] = filtered_players[:MAX_PLAYERS]
+            output_data["limit_hit"] = True
+            output_data["limit_message"] = (
+                f"Returned {original_count} players which exceeds the limit of {MAX_PLAYERS}. "
+                "Please narrow the results using filters like --player, --team, --team-id, --position, "
+                "--min-price or --max-price to reduce the number of players returned."
+            )
+        else:
+            output_data["players"] = filtered_players
 
     if not (args.gameweeks or args.teams or specific_player_filters_active):
         output_status = "info"
