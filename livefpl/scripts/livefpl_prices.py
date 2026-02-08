@@ -3,6 +3,7 @@ from livefpl_utils import LiveFPLUtils, format_json_output
 
 URL = "https://www.livefpl.net/prices"
 
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch LiveFPL prices progress and output cached JSON.")
     parser.add_argument('--force-refresh', action='store_true', help='Force fetching fresh data from the website, ignoring cache.')
@@ -74,6 +75,7 @@ def main():
         print(format_json_output(status='success', data=data))
     except Exception as e:
         print(format_json_output(status='error', message=str(e)))
+
 
 if __name__ == '__main__':
     main()

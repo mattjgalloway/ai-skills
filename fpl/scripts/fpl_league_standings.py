@@ -1,5 +1,5 @@
 import argparse
-from typing import Any, Dict, List
+from typing import Any, Dict
 from fpl_utils import FPLUtils, format_json_output
 
 

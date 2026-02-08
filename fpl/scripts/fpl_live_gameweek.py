@@ -2,6 +2,7 @@ import argparse
 from typing import Any, Dict, List, Optional, Tuple
 from fpl_utils import FPLUtils, format_json_output
 
+
 class FPLLiveGameweek:
     BASE_URL_TEMPLATE: str = "https://fantasy.premierleague.com/api/event/{gw}/live/"
 
@@ -83,6 +84,7 @@ def main():
         output_message = f"Failed to fetch live gameweek data: {e}"
 
     print(format_json_output(status=output_status, data=output_data, message=output_message))
+
 
 if __name__ == "__main__":
     main()

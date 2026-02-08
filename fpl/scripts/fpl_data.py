@@ -1,9 +1,7 @@
 import argparse
-import json
-import os
 import unicodedata
 from typing import Any, Dict, List, Optional
-from fpl_utils import FPLUtils, format_json_output # Import the utility and formatter
+from fpl_utils import FPLUtils, format_json_output  # Import the utility and formatter
 
 
 def normalize_str(s: Optional[str]) -> str:
@@ -13,6 +11,7 @@ def normalize_str(s: Optional[str]) -> str:
     # Decompose unicode characters and remove combining diacritics
     normalized = unicodedata.normalize('NFKD', str(s))
     return ''.join(c for c in normalized if not unicodedata.combining(c)).lower()
+
 
 class FPLData:
     BASE_URL: str = "https://fantasy.premierleague.com/api/bootstrap-static/"
@@ -58,6 +57,7 @@ class FPLData:
             'short_name': team.get('short_name'),
             'strength': team.get('strength')
         } for team in teams]
+
     def get_players(self, name: Optional[str] = None, player_ids: Optional[List[int]] = None, team_id: Optional[int] = None, position: Optional[str] = None, min_price: Optional[float] = None, max_price: Optional[float] = None) -> List[Dict[str, Any]]:
         data = self._data 
         elements = data.get('elements', [])
@@ -70,7 +70,7 @@ class FPLData:
             player_first_name = player.get('first_name', '')
             player_second_name = player.get('second_name', '')
             full_name = f"{player_first_name} {player_second_name}".strip()
-            
+
             player_team_id = player.get('team')
             player_element_type = player.get('element_type')
 
@@ -90,20 +90,26 @@ class FPLData:
                 'selected_by_percent': player.get('selected_by_percent')
             }
 
-            if name and normalize_str(name) not in normalize_str(full_name): continue
-            if player_ids is not None and player_info['id'] not in player_ids: continue
-            if team_id is not None and team_id!= player_team_id: continue
+            if name and normalize_str(name) not in normalize_str(full_name):
+                continue
+            if player_ids is not None and player_info['id'] not in player_ids:
+                continue
+            if team_id is not None and team_id != player_team_id:
+                continue
             if position:
                 target_position_id = self.position_map.get(position.lower())
-                if target_position_id is None or target_position_id!= player_element_type: continue
-            if min_price is not None and (player_cost is None or player_cost < min_price): continue
-            if max_price is not None and (player_cost is None or player_cost > max_price): continue
+                if target_position_id is None or target_position_id != player_element_type:
+                    continue
+            if min_price is not None and (player_cost is None or player_cost < min_price):
+                continue
+            if max_price is not None and (player_cost is None or player_cost > max_price):
+                continue
 
             player_details.append(player_info)
         return player_details
 
     def get_gameweeks(self) -> List[Dict[str, Any]]:
-        data = self._data 
+        data = self._data
         events = data.get('events', [])
         return [{
             'id': event.get('id'),
@@ -118,6 +124,7 @@ class FPLData:
             'top_element_points': (event.get('top_element_info') or {}).get('points')
         } for event in events]
 
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch and display Fantasy Premier League data.")
     parser.add_argument('--gameweeks', action='store_true', help='Show details for all gameweeks.')
@@ -130,7 +137,7 @@ def main():
     parser.add_argument('--min-price', type=float, help='Minimum player cost (e.g., 4.5).')
     parser.add_argument('--max-price', type=float, help='Maximum player cost (e.g., 10.0).')
     parser.add_argument('--force-refresh', action='store_true', help='Force fetching fresh data from the API, ignoring cache.')
-    
+
     args = parser.parse_args()
 
     fpl_utils = FPLUtils()
@@ -160,25 +167,27 @@ def main():
         search_team = normalize_str(args.team)
         found_teams = [team['id'] for team in all_teams if search_team in normalize_str(team.get('name')) or search_team in normalize_str(team.get('short_name'))]
         if len(found_teams) == 1:
-            if filter_team_id is not None and filter_team_id!= found_teams[0]:
+            if filter_team_id is not None and filter_team_id != found_teams[0]:
                 team_filter_message = f"Warning: Both --team '{args.team}' (ID {found_teams[0]}) and --team-id '{args.team_id}' were provided and conflict. Using --team-id: {args.team_id}."
             else:
                 filter_team_id = found_teams[0]
-            if not team_filter_message: team_filter_message = f"Filtering by team name: '{args.team}' (Resolved to ID: {filter_team_id})"
+            if not team_filter_message:
+                team_filter_message = f"Filtering by team name: '{args.team}' (Resolved to ID: {filter_team_id})"
         elif len(found_teams) > 1:
             output_status = "error"
             output_message = f"Multiple teams found for '{args.team}': {[fpl.team_name_map.get(tid) for tid in found_teams]}. Please be more specific or use the team ID with --team-id."
             print(format_json_output(status=output_status, message=output_message))
             return
         elif not filter_team_id:
-             output_status = "error"
-             output_message = f"No team found matching '{args.team}'. Please check the name."
-             print(format_json_output(status=output_status, message=output_message))
-             return
+            output_status = "error"
+            output_message = f"No team found matching '{args.team}'. Please check the name."
+            print(format_json_output(status=output_status, message=output_message))
+            return
     elif args.team_id is not None:
         team_filter_message = f"Filtering by team ID: {args.team_id}"
 
-    if team_filter_message: output_data["team_filter_info"] = team_filter_message
+    if team_filter_message:
+        output_data["team_filter_info"] = team_filter_message
 
     if args.gameweeks:
         output_data["gameweeks"] = fpl.get_gameweeks()
@@ -205,8 +214,9 @@ def main():
     if not (args.gameweeks or args.teams or specific_player_filters_active):
         output_status = "info"
         output_message = "No specific data requested. Use --gameweeks, --teams, or filters like --player, --team, etc."
-    
+
     print(format_json_output(status=output_status, data=output_data, message=output_message))
+
 
 if __name__ == "__main__":
     main()

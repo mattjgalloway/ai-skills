@@ -2,6 +2,7 @@ import argparse
 from typing import Any, Dict, List, Optional
 from fpl_utils import FPLUtils, format_json_output
 
+
 class FPLFixtureData:
     BASE_URL: str = "https://fantasy.premierleague.com/api/fixtures/"
 
@@ -65,6 +66,7 @@ def main():
         output_message = f"Failed to fetch fixtures: {e}"
 
     print(format_json_output(status=output_status, data=output_data, message=output_message))
+
 
 if __name__ == "__main__":
     main()

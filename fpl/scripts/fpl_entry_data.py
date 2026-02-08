@@ -1,8 +1,6 @@
 import argparse
-import json
-import os
 from typing import Any, Dict, List, Optional
-from fpl_utils import FPLUtils, format_json_output # Import the utility and formatter
+from fpl_utils import FPLUtils, format_json_output  # Import the utility and formatter
 
 
 class FPLEntryData:
@@ -10,7 +8,7 @@ class FPLEntryData:
 
     def __init__(self, entry_id: int, fpl_utils: FPLUtils) -> None:
         self.entry_id: int = entry_id
-        self.fpl_utils: FPLUtils = fpl_utils # Use the shared utility
+        self.fpl_utils: FPLUtils = fpl_utils  # Use the shared utility
         # These will store raw fetched data for processing
         self._raw_details_data: Optional[Dict[str, Any]] = None
         self._raw_history_data: Optional[Dict[str, Any]] = None
@@ -21,7 +19,7 @@ class FPLEntryData:
         url = f"{self.BASE_URL}{self.entry_id}/"
         try:
             self._raw_details_data = self.fpl_utils.fetch_url_cached(url, f"entry_{self.entry_id}_details", force_refresh)
-            
+
             leagues = {
                 "classic": [{"id": l.get('id'), "name": l.get('name'), "entry_rank": l.get('entry_rank'), "entry_last_rank": l.get('entry_last_rank')} for l in self._raw_details_data.get('leagues', {}).get('classic', [])],
                 "h2h": [{"id": l.get('id'), "name": l.get('name'), "entry_rank": l.get('entry_rank'), "entry_last_rank": l.get('entry_last_rank')} for l in self._raw_details_data.get('leagues', {}).get('h2h', [])]
@@ -48,7 +46,7 @@ class FPLEntryData:
         url = f"{self.BASE_URL}{self.entry_id}/history/"
         try:
             self._raw_history_data = self.fpl_utils.fetch_url_cached(url, f"entry_{self.entry_id}_history", force_refresh)
-            
+
             current_season_history = []
             for gw_data in self._raw_history_data.get('current', []):
                 current_season_history.append({
@@ -93,7 +91,7 @@ class FPLEntryData:
         url = f"{self.BASE_URL}{self.entry_id}/transfers/"
         try:
             self._raw_transfers_data = self.fpl_utils.fetch_url_cached(url, f"entry_{self.entry_id}_transfers", force_refresh)
-            
+
             transfers_list = []
             for transfer in self._raw_transfers_data:
                 transfers_list.append({
@@ -125,7 +123,7 @@ class FPLEntryData:
                     "is_vice_captain": pick.get('is_vice_captain'),
                     "element_type": pick.get('element_type')
                 })
-            
+
             automatic_subs = []
             for sub in raw_data.get('automatic_subs', []):
                 automatic_subs.append({
@@ -149,6 +147,7 @@ class FPLEntryData:
         except Exception as e:
             raise Exception(f"Failed to get picks for entry ID {self.entry_id}, Gameweek {gameweek}: {e}")
 
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch and display Fantasy Premier League entry data for a given team ID.")
     parser.add_argument('entry_id', type=int, help='The FPL team ID for which to fetch data.')
@@ -157,10 +156,10 @@ def main():
     parser.add_argument('--transfers', action='store_true', help='Get player transfer history for the FPL entry.')
     parser.add_argument('--picks', type=int, metavar='GAMEWEEK_NUMBER', help='Get player picks for a specific gameweek. Requires GAMEWEEK_NUMBER.')
     parser.add_argument('--force-refresh', action='store_true', help='Force fetching fresh data from the API, ignoring cache.')
-    
+
     args = parser.parse_args()
 
-    fpl_utils = FPLUtils() # Initialize the utility
+    fpl_utils = FPLUtils()  # Initialize the utility
     entry_data_fetcher = FPLEntryData(entry_id=args.entry_id, fpl_utils=fpl_utils)
     output_data = {}
     output_message = None
@@ -169,7 +168,7 @@ def main():
     try:
         if args.details:
             output_data["entry_details"] = entry_data_fetcher.get_entry_details(force_refresh=args.force_refresh)
-        
+
         if args.history:
             output_data["entry_history"] = entry_data_fetcher.get_history(force_refresh=args.force_refresh)
 
@@ -178,7 +177,7 @@ def main():
 
         if args.picks:
             output_data["entry_picks"] = entry_data_fetcher.get_picks(gameweek=args.picks, force_refresh=args.force_refresh)
-        
+
         if not (args.details or args.history or args.transfers or args.picks):
             output_status = "info"
             output_message = f"No specific data type requested for entry ID {args.entry_id}. Use --details, --history, --transfers, or --picks <GAMEWEEK_NUMBER>."
@@ -188,6 +187,7 @@ def main():
         output_message = str(e)
 
     print(format_json_output(status=output_status, data=output_data, message=output_message))
+
 
 if __name__ == "__main__":
     main()

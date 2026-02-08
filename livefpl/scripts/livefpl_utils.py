@@ -1,9 +1,10 @@
 import json
 import os
 import re
-from datetime import datetime, date
+from datetime import datetime
 from urllib import request, error
 from typing import Any, Dict, Optional
+
 
 class StatsTracker:
     """Simple JSON-backed tracker for per-URL stats (requests, api_fetches)."""

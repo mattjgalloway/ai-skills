@@ -4,6 +4,7 @@ from datetime import datetime, date
 from urllib import request, error
 from typing import Any, Dict, Optional
 
+
 class StatsTracker:
     """Simple JSON-backed tracker for per-URL stats (requests, api_fetches)."""
     def __init__(self, cache_dir: str, filename: str = "fpl_cache_stats.json") -> None:
@@ -58,20 +59,20 @@ class FPLUtils:
     def fetch_url_cached(self, url: str, cache_key: str, force_refresh: bool) -> Dict[str, Any]:
         """
         Fetches data from a given URL, using a cache file if available and valid.
-        
+
         Args:
             url (str): The URL to fetch data from.
             cache_key (str): A unique identifier for the cache file (e.g., "bootstrap_static", "entry_123_details").
             force_refresh (bool): If True, forces a fresh fetch from the URL, ignoring cache.
-        
+
         Returns:
             dict: The JSON data from the URL or cache.
-        
+
         Raises:
             Exception: If a network, API, or data parsing error occurs.
         """
         cache_file_path = os.path.join(self.cache_dir, f"fpl_cache_{cache_key}.json")
-        
+
         # Update simple stats: count this request invocation (non-fatal)
         try:
             self.stats.increment_request(url)
@@ -87,10 +88,10 @@ class FPLUtils:
                     with open(cache_file_path, 'r') as f:
                         return json.load(f)
                 except json.JSONDecodeError:
-                    pass # Cache corrupted, will proceed to fetch fresh data
+                    pass  # Cache corrupted, will proceed to fetch fresh data
                 except Exception:
-                    pass # Other cache read error, will proceed to fetch fresh data
-        
+                    pass  # Other cache read error, will proceed to fetch fresh data
+
         # Fetch from API if cache failed or not used
         try:
             with request.urlopen(url) as response:
@@ -98,7 +99,7 @@ class FPLUtils:
                     raise error.HTTPError(url, response.getcode(), f"HTTP Error {response.getcode()}: {response.reason}", response.info(), None)
                 data_bytes = response.read()
                 data = json.loads(data_bytes.decode('utf-8'))
-            
+
             # Save to cache
             with open(cache_file_path, 'w') as f:
                 json.dump(data, f, indent=4)
@@ -116,6 +117,7 @@ class FPLUtils:
             raise Exception(f"Data Parsing Error fetching {cache_key} from {url}: Failed to decode JSON. Error: {e}")
         except Exception as e:
             raise Exception(f"An unexpected error occurred during {cache_key} fetch from {url}: {e}")
+
 
 def format_json_output(status: str, data: Optional[Dict[str, Any]] = None, message: Optional[str] = None) -> str:
     """
