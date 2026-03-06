@@ -129,7 +129,7 @@ Fetch live per-player and event statistics for a specific gameweek. The `--gamew
 
 ### Live output fields
 
-The script returns a `live` object containing:
+The script returns an object containing:
 
 - `gameweek`: Provided gameweek number
 - `elements`: Array of player live objects (`id`, `stats`, `explain`)

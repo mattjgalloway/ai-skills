@@ -90,7 +90,7 @@ def main():
     output_message = None
 
     try:
-        output_data['live'] = live_fetcher.get_live_gameweek(
+        output_data = live_fetcher.get_live_gameweek(
             gameweek=args.gameweek,
             player_ids=args.player_ids,
             force_refresh=args.force_refresh
