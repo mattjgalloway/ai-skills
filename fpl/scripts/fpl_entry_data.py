@@ -121,9 +121,7 @@ class FPLEntryData:
                     "multiplier": pick.get('multiplier'),
                     "is_captain": pick.get('is_captain'),
                     "is_vice_captain": pick.get('is_vice_captain'),
-                    "element_type": pick.get('element_type'),
-                    "purchase_price": pick.get('purchase_price'),
-                    "selling_price": pick.get('selling_price')
+                    "element_type": pick.get('element_type'))
                 })
 
             automatic_subs = []
