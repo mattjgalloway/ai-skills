@@ -87,7 +87,8 @@ class FPLData:
                 'position': self.position_map.get(player_element_type, 'Unknown'),
                 'now_cost': player_cost,
                 'status': player.get('status'),
-                'selected_by_percent': player.get('selected_by_percent')
+                'selected_by_percent': player.get('selected_by_percent'),
+                'ep_next': player.get('ep_next')
             }
 
             if name and normalize_str(name) not in normalize_str(full_name):
