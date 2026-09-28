@@ -4,6 +4,24 @@ from typing import Any, Dict, List, Optional
 from fpl_utils import FPLUtils, format_json_output, MAX_PLAYERS  # Import the utility and formatter
 
 
+STATUS_LABELS = {
+    'a': 'available',
+    'd': 'doubtful',
+    'i': 'injured',
+    's': 'suspended',
+    'u': 'unavailable',
+    'n': 'unavailable',
+}
+
+AVAILABILITY_STATUS_CODES = {
+    'available': {'a'},
+    'doubtful': {'d'},
+    'injured': {'i'},
+    'suspended': {'s'},
+    'unavailable': {'u', 'n'},
+}
+
+
 def normalize_str(s: Optional[str]) -> str:
     """Return a lower-cased, accent-stripped ascii representation of s for comparison."""
     if s is None:
@@ -58,7 +76,7 @@ class FPLData:
             'strength': team.get('strength')
         } for team in teams]
 
-    def get_players(self, name: Optional[str] = None, player_ids: Optional[List[int]] = None, team_id: Optional[int] = None, position: Optional[str] = None, min_price: Optional[float] = None, max_price: Optional[float] = None) -> List[Dict[str, Any]]:
+    def get_players(self, name: Optional[str] = None, player_ids: Optional[List[int]] = None, team_id: Optional[int] = None, position: Optional[str] = None, min_price: Optional[float] = None, max_price: Optional[float] = None, availability: Optional[str] = None) -> List[Dict[str, Any]]:
         data = self._data
         elements = data.get('elements', [])
 
@@ -78,6 +96,7 @@ class FPLData:
                 'id': player.get('id'),
                 'first_name': player_first_name,
                 'second_name': player_second_name,
+                'web_name': player.get('web_name'),
                 'full_name': full_name,
                 'team_id': player_team_id,
                 'team_name': self.team_name_map.get(player_team_id, 'Unknown Team'),
@@ -87,6 +106,14 @@ class FPLData:
                 'position': self.position_map.get(player_element_type, 'Unknown'),
                 'now_cost': player_cost,
                 'status': player.get('status'),
+                'availability': STATUS_LABELS.get(player.get('status'), 'unknown'),
+                'chance_of_playing_this_round': player.get('chance_of_playing_this_round'),
+                'chance_of_playing_next_round': player.get('chance_of_playing_next_round'),
+                'news': player.get('news'),
+                'news_added': player.get('news_added'),
+                'can_select': player.get('can_select'),
+                'can_transact': player.get('can_transact'),
+                'removed': player.get('removed'),
                 'selected_by_percent': player.get('selected_by_percent'),
                 'ep_next': player.get('ep_next')
             }
@@ -104,6 +131,10 @@ class FPLData:
             if min_price is not None and (player_cost is None or player_cost < min_price):
                 continue
             if max_price is not None and (player_cost is None or player_cost > max_price):
+                continue
+            if availability == 'flagged' and player.get('status') == 'a':
+                continue
+            if availability in AVAILABILITY_STATUS_CODES and player.get('status') not in AVAILABILITY_STATUS_CODES[availability]:
                 continue
 
             player_details.append(player_info)
@@ -137,9 +168,17 @@ def main():
     parser.add_argument('--position', type=str, help='Filter players by position (GKP, DEF, MID, FWD).')
     parser.add_argument('--min-price', type=float, help='Minimum player cost (e.g., 4.5).')
     parser.add_argument('--max-price', type=float, help='Maximum player cost (e.g., 10.0).')
+    parser.add_argument('--availability', choices=['all', 'flagged', 'available', 'doubtful', 'injured', 'suspended', 'unavailable'], help='Filter by official availability. Use flagged for every non-available status, or all to return availability fields without status filtering.')
+    parser.add_argument('--limit', type=int, default=MAX_PLAYERS, help=f'Maximum players to return in one page (1-{MAX_PLAYERS}; default: {MAX_PLAYERS}).')
+    parser.add_argument('--offset', type=int, default=0, help='Zero-based offset for bounded pagination (default: 0).')
     parser.add_argument('--force-refresh', action='store_true', help='Force fetching fresh data from the API, ignoring cache.')
 
     args = parser.parse_args()
+
+    if not 1 <= args.limit <= MAX_PLAYERS:
+        parser.error(f'--limit must be between 1 and {MAX_PLAYERS}')
+    if args.offset < 0:
+        parser.error('--offset must be zero or greater')
 
     fpl_utils = FPLUtils()
     fpl = FPLData(fpl_utils)
@@ -198,7 +237,8 @@ def main():
 
     specific_player_filters_active = (args.player is not None or
                                       args.player_ids is not None or args.position is not None or args.min_price is not None or
-                                      args.max_price is not None or args.team is not None or args.team_id is not None)
+                                      args.max_price is not None or args.team is not None or args.team_id is not None or
+                                      args.availability is not None)
 
     if specific_player_filters_active:
         filtered_players = fpl.get_players(
@@ -207,26 +247,31 @@ def main():
             team_id=filter_team_id,
             position=args.position,
             min_price=args.min_price,
-            max_price=args.max_price
+            max_price=args.max_price,
+            availability=args.availability
         )
         original_count = len(filtered_players)
+        page_end = min(args.offset + args.limit, original_count)
+        page_players = filtered_players[args.offset:page_end]
+        has_more = page_end < original_count
         output_data["player_count"] = original_count
+        output_data["returned_count"] = len(page_players)
+        output_data["offset"] = args.offset
+        output_data["limit"] = args.limit
+        output_data["has_more"] = has_more
+        output_data["next_offset"] = page_end if has_more else None
+        output_data["players"] = page_players
+        output_data["limit_hit"] = has_more
 
-        # Enforce maximum returned players to avoid huge outputs
-        if original_count > MAX_PLAYERS:
-            output_data["players"] = filtered_players[:MAX_PLAYERS]
-            output_data["limit_hit"] = True
+        if has_more:
             output_data["limit_message"] = (
-                f"Returned {original_count} players which exceeds the limit of {MAX_PLAYERS}. "
-                "Please narrow the results using filters like --player, --team, --team-id, --position, "
-                "--min-price or --max-price to reduce the number of players returned."
+                f"This query matched {original_count} players. Returned the bounded page at offset {args.offset} "
+                f"with limit {args.limit}; use --offset {page_end} for the next page, or narrow the filters."
             )
-        else:
-            output_data["players"] = filtered_players
 
     if not (args.gameweeks or args.teams or specific_player_filters_active):
         output_status = "info"
-        output_message = "No specific data requested. Use --gameweeks, --teams, or filters like --player, --team, etc."
+        output_message = "No specific data requested. Use --gameweeks, --teams, --availability, or filters like --player or --team."
 
     print(format_json_output(status=output_status, data=output_data, message=output_message))
 

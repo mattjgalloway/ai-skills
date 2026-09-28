@@ -1,6 +1,7 @@
 import argparse
 from typing import Any, Dict, List, Optional
 from fpl_utils import FPLUtils, format_json_output  # Import the utility and formatter
+from fpl_data import FPLData
 
 
 class FPLEntryData:
@@ -121,7 +122,7 @@ class FPLEntryData:
                     "multiplier": pick.get('multiplier'),
                     "is_captain": pick.get('is_captain'),
                     "is_vice_captain": pick.get('is_vice_captain'),
-                    "element_type": pick.get('element_type'))
+                    "element_type": pick.get('element_type')
                 })
 
             automatic_subs = []
@@ -147,6 +148,43 @@ class FPLEntryData:
         except Exception as e:
             raise Exception(f"Failed to get picks for entry ID {self.entry_id}, Gameweek {gameweek}: {e}")
 
+    def get_availability(self, gameweek: int, force_refresh: bool = False, flagged_only: bool = False) -> Dict[str, Any]:
+        """Join an entry's gameweek picks to current official player availability."""
+        picks = self.get_picks(gameweek=gameweek, force_refresh=force_refresh)
+        pick_rows = picks.get('picks', [])
+        player_ids = [pick.get('element_id') for pick in pick_rows if pick.get('element_id') is not None]
+
+        fpl = FPLData(self.fpl_utils)
+        fpl._load_data(force_refresh=force_refresh)
+        players_by_id = {
+            player.get('id'): player
+            for player in fpl.get_players(player_ids=player_ids, availability='all')
+        }
+
+        availability_rows = []
+        for pick in pick_rows:
+            player = players_by_id.get(pick.get('element_id'))
+            if not player:
+                continue
+            if flagged_only and player.get('status') == 'a':
+                continue
+            availability_rows.append({
+                **player,
+                'squad_position': pick.get('position'),
+                'multiplier': pick.get('multiplier'),
+                'is_captain': pick.get('is_captain'),
+                'is_vice_captain': pick.get('is_vice_captain'),
+            })
+
+        return {
+            'gameweek': gameweek,
+            'active_chip': picks.get('active_chip'),
+            'squad_player_count': len(player_ids),
+            'flagged_player_count': sum(1 for player in players_by_id.values() if player.get('status') != 'a'),
+            'flagged_only': flagged_only,
+            'players': availability_rows,
+        }
+
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch and display Fantasy Premier League entry data for a given team ID.")
@@ -155,9 +193,14 @@ def main():
     parser.add_argument('--history', action='store_true', help='Get historical performance data for the FPL entry (gameweek points, overall ranks, past seasons, chips played).')
     parser.add_argument('--transfers', action='store_true', help='Get player transfer history for the FPL entry.')
     parser.add_argument('--picks', type=int, metavar='GAMEWEEK_NUMBER', help='Get player picks for a specific gameweek. Requires GAMEWEEK_NUMBER.')
+    parser.add_argument('--availability', type=int, metavar='GAMEWEEK_NUMBER', help='Get current official availability for the entry picks from a specific gameweek.')
+    parser.add_argument('--flagged-only', action='store_true', help='With --availability, return only non-available players.')
     parser.add_argument('--force-refresh', action='store_true', help='Force fetching fresh data from the API, ignoring cache.')
 
     args = parser.parse_args()
+
+    if args.flagged_only and args.availability is None:
+        parser.error('--flagged-only requires --availability GAMEWEEK_NUMBER')
 
     fpl_utils = FPLUtils()  # Initialize the utility
     entry_data_fetcher = FPLEntryData(entry_id=args.entry_id, fpl_utils=fpl_utils)
@@ -178,9 +221,16 @@ def main():
         if args.picks:
             output_data["entry_picks"] = entry_data_fetcher.get_picks(gameweek=args.picks, force_refresh=args.force_refresh)
 
-        if not (args.details or args.history or args.transfers or args.picks):
+        if args.availability:
+            output_data["entry_availability"] = entry_data_fetcher.get_availability(
+                gameweek=args.availability,
+                force_refresh=args.force_refresh,
+                flagged_only=args.flagged_only,
+            )
+
+        if not (args.details or args.history or args.transfers or args.picks or args.availability):
             output_status = "info"
-            output_message = f"No specific data type requested for entry ID {args.entry_id}. Use --details, --history, --transfers, or --picks <GAMEWEEK_NUMBER>."
+            output_message = f"No specific data type requested for entry ID {args.entry_id}. Use --details, --history, --transfers, --picks <GAMEWEEK_NUMBER>, or --availability <GAMEWEEK_NUMBER>."
 
     except Exception as e:
         output_status = "error"
